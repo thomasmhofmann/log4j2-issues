@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Configuration monitorInterval="${sys:de.justiz.eip.logging.monitorInterval:-0}">
+
+    <Properties>
+        <Property name="archiveDir">${logDir}/archive</Property>
+        <Property name="archiveSubDirTimePattern">$${date:yyyy-MM-dd}</Property>
+        <Property name="logDir">${sys:de.justiz.eip.logging.dir:-.}</Property>
+        <Property name="logFileNameSuffix">${sys:log.filename.suffix:-2-17-1}</Property>
+        <Property name="logFileTimePattern">%date{yyyy-MM-dd-HH}</Property>
+        <Property name="maxContentLength">${sys:de.justiz.eip.logging.maxContentLength:--1}</Property>
+        <Property name="maxLogAge">${sys:de.justiz.eip.logging.maxLogAgeInDays:-7}D</Property>
+        <Property name="maxLogRolloverCounter">${sys:de.justiz.eip.logging.maxLogRolloverCounter:-1000}</Property>
+        <Property name="maxLogSize">${sys:de.justiz.eip.logging.maxLogSizeInMb:-100}MB</Property>
+        <Property name="thirdPartyLogLevel">${sys:de.justiz.eip.logging.thirdPartyLogLevel:-info}</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="thirdPartyConsoleAppender">
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY" />
+            <PatternLayout
+                    pattern="%date{ISO8601_OFFSET_DATE_TIME_HHMM} %-5level [%-40.40t] %location{36} %message%n%throwable"
+                    charset="UTF-8" />
+        </Console>
+
+        <RollingFile name="thirdPartyFileAppender" fileName="${logDir}/third-party-${logFileNameSuffix}.log"
+                     filePattern="${archiveDir}/${archiveSubDirTimePattern}/eip-client-thirdParty-${logFileTimePattern}.%i.log.gz">
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY" />
+            <PatternLayout
+                    pattern="%date{ISO8601_OFFSET_DATE_TIME_HHMM} %-5level [%t] %location{36} %message%n%throwable"
+                    charset="UTF-8" />
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="${maxLogSize}" />
+            </Policies>
+            <DefaultRolloverStrategy max="${maxLogRolloverCounter}">
+                <Delete basePath="${archiveDir}" maxDepth="2">
+                    <IfFileName glob="*/*.gz" />
+                    <IfLastModified age="${maxLogAge}" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <!-- possible level/priority: all|debug|info|warn|error|fatal|off -->
+    <Loggers>
+        <Root level="${thirdPartyLogLevel}" includeLocation="false">
+            <AppenderRef ref="thirdPartyConsoleAppender" />
+            <AppenderRef ref="thirdPartyFileAppender" />
+        </Root>
+    </Loggers>
+</Configuration>
